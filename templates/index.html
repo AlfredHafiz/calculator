@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Calculator</title>
+    <!-- TailwindCSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for beautiful typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        /* Base font for the entire calculator */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Styling for the calculator title */
+        .title-text {
+            font-family: 'Playfair Display', serif;
+            /* Gradient effect for the title */
+            background: linear-gradient(45deg, #3B82F6, #1D4ED8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            letter-spacing: 2px;
+            position: relative;
+        }
+        /* Hover effect for the title */
+        .title-text::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(45deg, #3B82F6, #1D4ED8);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        .title-text:hover::after {
+            transform: scaleX(1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <!-- Main calculator container -->
+    <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
+        <!-- Calculator title -->
+        <div class="text-center mb-4">
+            <span class="title-text text-2xl font-bold tracking-wider">Calculator</span>
+        </div>
+        
+        <!-- Calculator display area -->
+        <div class="mb-4">
+            <!-- Expression display (shows the full calculation) -->
+            <div id="expression" class="bg-gray-50 rounded-t-lg p-2 text-right text-sm font-medium text-gray-600 min-h-[1.5rem]">
+            </div>
+            <!-- Main display (shows current input/result) -->
+            <div id="display" class="bg-gray-50 rounded-b-lg p-4 text-right text-3xl font-semibold text-gray-800 min-h-[4rem]">
+                0
+            </div>
+        </div>
+        
+        <!-- Calculator buttons grid -->
+        <div class="grid grid-cols-4 gap-3">
+            <!-- Function buttons (C, ⌫, %) -->
+            <button class="calc-btn bg-gray-100 hover:bg-gray-200" data-action="clear">C</button>
+            <button class="calc-btn bg-gray-100 hover:bg-gray-200" data-action="backspace">⌫</button>
+            <button class="calc-btn bg-gray-100 hover:bg-gray-200" data-action="percent">%</button>
+            <button class="calc-btn bg-blue-500 hover:bg-blue-600 text-white" data-action="operator" data-operator="/">÷</button>
+            
+            <!-- Number buttons -->
+            <button class="calc-btn bg-white hover:bg-gray-50" data-action="number">7</button>
+            <button class="calc-btn bg-white hover:bg-gray-50" data-action="number">8</button>
+            <button class="calc-btn bg-white hover:bg-gray-50" data-action="number">9</button>
+            <button class="calc-btn bg-blue-500 hover:bg-blue-600 text-white" data-action="operator" data-operator="*">×</button>
+            
+            <button class="calc-btn bg-white hover:bg-gray-50" data-action="number">4</button>
+            <button class="calc-btn bg-white hover:bg-gray-50" data-action="number">5</button>
+            <button class="calc-btn bg-white hover:bg-gray-50" data-action="number">6</button>
+            <button class="calc-btn bg-blue-500 hover:bg-blue-600 text-white" data-action="operator" data-operator="-">−</button>
+            
+            <button class="calc-btn bg-white hover:bg-gray-50" data-action="number">1</button>
+            <button class="calc-btn bg-white hover:bg-gray-50" data-action="number">2</button>
+            <button class="calc-btn bg-white hover:bg-gray-50" data-action="number">3</button>
+            <button class="calc-btn bg-blue-500 hover:bg-blue-600 text-white" data-action="operator" data-operator="+">+</button>
+            
+            <button class="calc-btn bg-white hover:bg-gray-50" data-action="number">0</button>
+            <button class="calc-btn bg-white hover:bg-gray-50" data-action="decimal">.</button>
+            <button class="calc-btn bg-blue-500 hover:bg-blue-600 text-white col-span-2" data-action="equals">=</button>
+        </div>
+    </div>
+
+    <script>
+        // Variables to store calculator state
+        let currentInput = '0';        // Current number being entered
+        let previousInput = '';        // Previous number entered
+        let operation = null;          // Current operation (+, -, *, /)
+        let shouldResetScreen = false; // Flag to reset screen after operation
+
+        // Get DOM elements
+        const display = document.getElementById('display');
+        const expression = document.getElementById('expression');
+        const buttons = document.querySelectorAll('.calc-btn');
+
+        // Update both displays (expression and current input)
+        function updateDisplay() {
+            display.textContent = currentInput;
+            // Show full expression only when both numbers and operation are present
+            if (previousInput && operation && currentInput !== '0' && !shouldResetScreen) {
+                expression.textContent = `${previousInput} ${operation} ${currentInput}`;
+            } else if (operation) {
+                // Show only first number and operation
+                expression.textContent = `${previousInput} ${operation}`;
+            } else {
+                // Show only current number
+                expression.textContent = currentInput;
+            }
+        }
+
+        // Clear calculator state
+        function clear() {
+            currentInput = '0';
+            previousInput = '';
+            operation = null;
+            shouldResetScreen = false;
+            updateDisplay();
+        }
+
+        // Add number to current input
+        function appendNumber(number) {
+            if (currentInput === '0' || shouldResetScreen) {
+                currentInput = number;
+                shouldResetScreen = false;
+            } else {
+                currentInput += number;
+            }
+            updateDisplay();
+        }
+
+        // Add decimal point
+        function appendDecimal() {
+            if (shouldResetScreen) {
+                currentInput = '0.';
+                shouldResetScreen = false;
+            } else if (!currentInput.includes('.')) {
+                currentInput += '.';
+            }
+            updateDisplay();
+        }
+
+        // Set operation and prepare for next number
+        function setOperation(op) {
+            if (operation !== null) calculate();
+            previousInput = currentInput;
+            operation = op;
+            shouldResetScreen = true;
+            expression.textContent = `${previousInput} ${operation}`;
+        }
+
+        // Calculate result using backend API
+        function calculate() {
+            if (operation === null || shouldResetScreen) return;
+            
+            // Send calculation request to backend
+            fetch('/calculate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    num1: parseFloat(previousInput),
+                    num2: parseFloat(currentInput),
+                    operation: operation
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    display.textContent = data.error;
+                    shouldResetScreen = true;
+                } else {
+                    currentInput = data.result.toString();
+                    operation = null;
+                    previousInput = '';
+                    shouldResetScreen = true;
+                    updateDisplay();
+                }
+            })
+            .catch(error => {
+                display.textContent = 'Error';
+                shouldResetScreen = true;
+            });
+        }
+
+        // Add click event listeners to all buttons
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                const action = button.dataset.action;
+                
+                switch (action) {
+                    case 'number':
+                        appendNumber(button.textContent);
+                        break;
+                    case 'decimal':
+                        appendDecimal();
+                        break;
+                    case 'operator':
+                        setOperation(button.dataset.operator);
+                        break;
+                    case 'equals':
+                        calculate();
+                        break;
+                    case 'clear':
+                        clear();
+                        break;
+                    case 'backspace':
+                        currentInput = currentInput.slice(0, -1) || '0';
+                        updateDisplay();
+                        break;
+                    case 'percent':
+                        currentInput = (parseFloat(currentInput) / 100).toString();
+                        updateDisplay();
+                        break;
+                }
+            });
+        });
+
+        // Add keyboard support
+        document.addEventListener('keydown', (event) => {
+            if (event.key >= '0' && event.key <= '9') appendNumber(event.key);
+            if (event.key === '.') appendDecimal();
+            if (event.key === '+') setOperation('+');
+            if (event.key === '-') setOperation('-');
+            if (event.key === '*') setOperation('*');
+            if (event.key === '/') setOperation('/');
+            if (event.key === 'Enter' || event.key === '=') calculate();
+            if (event.key === 'Escape') clear();
+            if (event.key === 'Backspace') {
+                currentInput = currentInput.slice(0, -1) || '0';
+                updateDisplay();
+            }
+        });
+    </script>
+</body>
+</html> 
